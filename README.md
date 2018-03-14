@@ -35,6 +35,7 @@ config :passwordless_auth,
 
 ## TODO
 
+- [] TESTS!
 - [] Generate documentation
 - [] Publish on hex.pm
 - [] Don't start if config is missing
