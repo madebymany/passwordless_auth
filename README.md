@@ -35,8 +35,10 @@ config :passwordless_auth,
 
 ## TODO
 
-- [] TESTS!
-- [] Generate documentation
-- [] Publish on hex.pm
-- [] Don't start if config is missing
-- [] Email authentication method
+- [ ] TESTS!
+- [ ] Add description to README
+- [ ] Generate documentation
+- [ ] Add license
+- [ ] Publish on hex.pm
+- [ ] Don't start if config is missing
+- [ ] Email authentication method
