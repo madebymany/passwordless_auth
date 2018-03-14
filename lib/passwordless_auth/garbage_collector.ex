@@ -23,7 +23,7 @@ defmodule PasswordlessAuth.GarbageCollector do
   end
 
   defp run do
-    frequency = Application.get_env(:passwordless_auth, :garbage_collector_frequency)
+    frequency = Application.get_env(:passwordless_auth, :garbage_collector_frequency) || 30
     Process.send_after(self(), :run, frequency * 1000)
   end
 

@@ -29,7 +29,7 @@ defmodule PasswordlessAuth do
   """
   def send_verification_code(phone_number) do
     verification_code = generate_verification_code()
-    ttl = Application.get_env(:passwordless_auth, :verification_code_ttl)
+    ttl = Application.get_env(:passwordless_auth, :verification_code_ttl) || 300
     expires = NaiveDateTime.utc_now() |> NaiveDateTime.add(ttl)
 
     request = %{
