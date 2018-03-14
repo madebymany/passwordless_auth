@@ -17,7 +17,7 @@ end
 
 PasswordlessAuth depends on [ExTwilio config](https://github.com/danielberkompas/ex_twilio) so set ExTwilio config in your `config/config.exs` file:
 
-```
+```elixir
 config :ex_twilio,
   account_sid: "TWILIO_ACCOUNT_SID",
   auth_token: "TWILIO_AUTH_TOKEN",
@@ -26,7 +26,7 @@ config :ex_twilio,
 
 Set PasswordlessAuth config in your `config/config.exs` file:
 
-```
+```elixir
 config :passwordless_auth,
   messaging_service_sid: "",
   garbage_collector_frequency: 30, # optional (defaults to 30)
