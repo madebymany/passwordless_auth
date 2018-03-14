@@ -34,7 +34,7 @@ defmodule PasswordlessAuth do
 
     request = %{
       to: phone_number,
-      messaging_service_sid: Application.get_env(:ex_twilio, :messaging_service_sid),
+      messaging_service_sid: Application.get_env(:passwordless_auth, :messaging_service_sid),
       body: "Your verification code is: #{verification_code}"
     }
 

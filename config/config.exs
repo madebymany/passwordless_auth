@@ -1,5 +1,6 @@
 use Mix.Config
 
 config :passwordless_auth,
-  verification_code_ttl: 300,
-  garbage_collector_frequency: 30
+  messaging_service_sid: "",
+  garbage_collector_frequency: 30,
+  verification_code_ttl: 300
