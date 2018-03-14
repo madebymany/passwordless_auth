@@ -7,9 +7,7 @@ defmodule PasswordlessAuth.GarbageCollector do
   use GenServer
   alias PasswordlessAuth.VerificationCodes
 
-  @frequency_secs 30
-
-  def start_link(_) do
+  def start_link do
     GenServer.start_link(__MODULE__, %{})
   end
 
@@ -25,7 +23,8 @@ defmodule PasswordlessAuth.GarbageCollector do
   end
 
   defp run do
-    Process.send_after(self(), :run, @frequency_secs * 1000)
+    frequency = Application.get_env(:passwordless_auth, :garbage_collector_frequency)
+    Process.send_after(self(), :run, frequency * 1000)
   end
 
   defp remove_expired_items do

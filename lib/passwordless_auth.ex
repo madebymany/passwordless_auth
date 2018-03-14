@@ -48,7 +48,7 @@ defmodule PasswordlessAuth do
           })
         )
         {:ok, response}
-      {:error, error} -> {:error, error}
+      err -> err
     end
   end
 
@@ -77,11 +77,11 @@ defmodule PasswordlessAuth do
     end
   end
 
-  def codes() do
+  def codes do
     Agent.get(VerificationCodes, fn state -> state end)
   end
 
-  defp generate_verification_code() do
+  defp generate_verification_code do
     for _ <- 1..6 do
       :rand.uniform(10) - 1
     end
