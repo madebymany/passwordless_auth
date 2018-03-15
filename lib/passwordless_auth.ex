@@ -69,8 +69,8 @@ defmodule PasswordlessAuth do
     current_date_time = NaiveDateTime.utc_now()
     with state <- Agent.get(Store, fn state -> state end),
          true <- Map.has_key?(state, phone_number),
-         ^verification_code <- get_in(state, [phone_number, :verification_code]),
-         :gt <- NaiveDateTime.compare(get_in(state, [phone_number, :expires]), current_date_time) do
+         ^verification_code <- get_in(state, [phone_number, Access.key(:verification_code)]),
+         :gt <- NaiveDateTime.compare(get_in(state, [phone_number, Access.key(:expires)]), current_date_time) do
       true
     else
       _ -> false

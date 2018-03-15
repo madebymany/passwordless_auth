@@ -32,7 +32,7 @@ defmodule PasswordlessAuth.GarbageCollector do
     Agent.update(
       Store,
       &Enum.filter(&1, fn ({_, item}) -> 
-        NaiveDateTime.compare(item[:expires], current_date_time) == :gt
+        NaiveDateTime.compare(item.expires, current_date_time) == :gt
       end) |> Map.new
     )
   end
