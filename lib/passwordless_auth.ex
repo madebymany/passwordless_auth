@@ -2,6 +2,8 @@ defmodule PasswordlessAuth do
   use Application
   alias PasswordlessAuth.{GarbageCollector, VerificationCode, Store}
 
+  @twilio_adapter Application.get_env(:passwordless_auth, :twilio_adapter)
+
   def start(_type, _args) do
     import Supervisor.Spec
 
@@ -20,12 +22,6 @@ defmodule PasswordlessAuth do
   `verification_code_ttl` config option (defaults to 300)
 
   Returns `{:ok, twilio_response}` or `{:error, error}`.
-
-  ## Examples
-
-      iex> PasswordlessAuth.send_verification_code("+447123456789")
-      {:ok, %ExTwilio.Message{...}}
-
   """
   def create_and_send_verification_code(phone_number) do
     verification_code = VerificationCode.generate_code()
@@ -38,7 +34,7 @@ defmodule PasswordlessAuth do
       body: "Your verification code is: #{verification_code}"
     }
 
-    case ExTwilio.Message.create(request) do
+    case @twilio_adapter.Message.create(request) do
       {:ok, response} ->
         Agent.update(
           Store,
@@ -62,7 +58,7 @@ defmodule PasswordlessAuth do
   ## Examples
 
       iex> PasswordlessAuth.verify_code("+447123456789", "123456")
-      true
+      false
 
   """
   def verify_code(phone_number, verification_code) do
@@ -81,15 +77,6 @@ defmodule PasswordlessAuth do
   Removes a code from state based on the given `phone_number`
 
   Returns `{:ok, %VerificationCode{...}}` or `{:error, :reason}`.
-
-  ## Examples
-
-      iex> PasswordlessAuth.remove_code("+447123456789")
-      {:ok, %VerificationCode{
-        code: "123456",
-        expires: %NaiveDateTime{}
-      }}
-
   """
   def remove_code(phone_number) do
     state = Agent.get(Store, fn state -> state end)

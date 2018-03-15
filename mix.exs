@@ -7,7 +7,8 @@ defmodule PasswordlessAuth.Mixfile do
       version: "0.1.0",
       elixir: "~> 1.5",
       start_permanent: Mix.env == :prod,
-      deps: deps()
+      deps: deps(),
+      elixirc_paths: elixirc_paths(Mix.env)
     ]
   end
 
@@ -19,10 +20,14 @@ defmodule PasswordlessAuth.Mixfile do
     ]
   end
 
+  defp elixirc_paths(:test), do: ["test/support", "lib"]
+  defp elixirc_paths(_), do: ["lib"]
+
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:ex_twilio, "~> 0.5.1"}
+      {:ex_twilio, "~> 0.5.1"},
+      {:mox, "~> 0.3", only: :test}
     ]
   end
 end
