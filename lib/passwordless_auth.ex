@@ -1,13 +1,13 @@
 defmodule PasswordlessAuth do
   use Application
-  alias PasswordlessAuth.{GarbageCollector, VerificationCodes}
+  alias PasswordlessAuth.{GarbageCollector, VerificationCode, Store}
 
   def start(_type, _args) do
     import Supervisor.Spec
 
     children = [
       worker(GarbageCollector, []),
-      worker(VerificationCodes, [])
+      worker(Store, [])
     ]
 
     opts = [strategy: :one_for_one, name: PasswordlessAuth.Supervisor]
@@ -27,8 +27,8 @@ defmodule PasswordlessAuth do
       {:ok, %ExTwilio.Message{...}}
 
   """
-  def send_verification_code(phone_number) do
-    verification_code = generate_verification_code()
+  def create_and_send_verification_code(phone_number) do
+    verification_code = VerificationCode.generate_code()
     ttl = Application.get_env(:passwordless_auth, :verification_code_ttl) || 300
     expires = NaiveDateTime.utc_now() |> NaiveDateTime.add(ttl)
 
@@ -41,14 +41,14 @@ defmodule PasswordlessAuth do
     case ExTwilio.Message.create(request) do
       {:ok, response} ->
         Agent.update(
-          VerificationCodes,
-          &Map.put(&1, phone_number, %{
-            verification_code: verification_code,
+          Store,
+          &Map.put(&1, phone_number, %VerificationCode{
+            code: verification_code,
             expires: expires
           })
         )
         {:ok, response}
-      err -> err
+      {:error, message, _code} -> {:error, message}
     end
   end
 
@@ -67,7 +67,7 @@ defmodule PasswordlessAuth do
   """
   def verify_code(phone_number, verification_code) do
     current_date_time = NaiveDateTime.utc_now()
-    with state <- Agent.get(VerificationCodes, fn state -> state end),
+    with state <- Agent.get(Store, fn state -> state end),
          true <- Map.has_key?(state, phone_number),
          ^verification_code <- get_in(state, [phone_number, :verification_code]),
          :gt <- NaiveDateTime.compare(get_in(state, [phone_number, :expires]), current_date_time) do
@@ -77,14 +77,28 @@ defmodule PasswordlessAuth do
     end
   end
 
-  def codes do
-    Agent.get(VerificationCodes, fn state -> state end)
-  end
+  @doc """
+  Removes a code from state based on the given `phone_number`
 
-  defp generate_verification_code do
-    for _ <- 1..6 do
-      :rand.uniform(10) - 1
+  Returns `{:ok, %VerificationCode{...}}` or `{:error, :reason}`.
+
+  ## Examples
+
+      iex> PasswordlessAuth.remove_code("+447123456789")
+      {:ok, %VerificationCode{
+        code: "123456",
+        expires: %NaiveDateTime{}
+      }}
+
+  """
+  def remove_code(phone_number) do
+    state = Agent.get(Store, fn state -> state end)
+    if Map.has_key?(state, phone_number) do
+      code = Agent.get(Store, &Map.get(&1, phone_number))
+      Agent.update(Store, &Map.delete(&1, phone_number))
+      {:ok, code}
+    else
+      {:error, :does_not_exist}
     end
-    |> Enum.join()
   end
 end

@@ -1,11 +1,11 @@
 defmodule PasswordlessAuth.GarbageCollector do
   @moduledoc """
-  Verification codes are stored in the PasswordlessAuth.VerificationCodes agent
+  Verification codes are stored in the PasswordlessAuth.Store agent
   This worker looks for expires verification codes at a set interval
   and removes them from the Agent state
   """
   use GenServer
-  alias PasswordlessAuth.VerificationCodes
+  alias PasswordlessAuth.Store
 
   def start_link do
     GenServer.start_link(__MODULE__, %{})
@@ -30,7 +30,7 @@ defmodule PasswordlessAuth.GarbageCollector do
   defp remove_expired_items do
     current_date_time = NaiveDateTime.utc_now()
     Agent.update(
-      VerificationCodes,
+      Store,
       &Enum.filter(&1, fn ({_, item}) -> 
         NaiveDateTime.compare(item[:expires], current_date_time) == :gt
       end) |> Map.new

@@ -1,4 +1,4 @@
-defmodule PasswordlessAuth.VerificationCodes do
+defmodule PasswordlessAuth.Store do
   use Agent
 
   def start_link do
