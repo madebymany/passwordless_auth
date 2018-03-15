@@ -35,10 +35,11 @@ config :passwordless_auth,
 
 ## TODO
 
-- [ ] TESTS!
+- [x] Tests
 - [ ] Add description to README
 - [ ] Generate documentation
 - [ ] Add license
 - [ ] Publish on hex.pm
 - [ ] Don't start if config is missing
+- [ ] Twilio options can be passed to `create_and_send_verification_sms` rather than requiring `messaging_service_sid` to be configured
 - [ ] Email authentication method

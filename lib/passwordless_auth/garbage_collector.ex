@@ -12,19 +12,19 @@ defmodule PasswordlessAuth.GarbageCollector do
   end
 
   def init(args) do
-    run()
+    queue_garbage_collection()
     {:ok, args}
   end
 
-  def handle_info(:run, args) do
+  def handle_info(:collect_garbage, args) do
     remove_expired_items()
-    run()
+    queue_garbage_collection()
     {:noreply, args}
   end
 
-  defp run do
+  defp queue_garbage_collection do
     frequency = Application.get_env(:passwordless_auth, :garbage_collector_frequency) || 30
-    Process.send_after(self(), :run, frequency * 1000)
+    Process.send_after(self(), :collect_garbage, frequency * 1000)
   end
 
   defp remove_expired_items do
