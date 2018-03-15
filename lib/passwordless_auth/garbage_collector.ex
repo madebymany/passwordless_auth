@@ -29,11 +29,13 @@ defmodule PasswordlessAuth.GarbageCollector do
 
   defp remove_expired_items do
     current_date_time = NaiveDateTime.utc_now()
+
     Agent.update(
       Store,
-      &Enum.filter(&1, fn ({_, item}) -> 
-        NaiveDateTime.compare(item.expires, current_date_time) == :gt
-      end) |> Map.new
+      &(Enum.filter(&1, fn {_, item} ->
+          NaiveDateTime.compare(item.expires, current_date_time) == :gt
+        end)
+        |> Map.new())
     )
   end
 end

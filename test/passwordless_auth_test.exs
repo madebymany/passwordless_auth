@@ -15,50 +15,55 @@ defmodule PasswordlessAuthTest do
     test "requests message creation from Twilio API and returns response on success" do
       phone_number = "123"
       response = %{response: :data}
-      expect(
-        @twilio_adapter.Message,
-        :create,
-        fn %{
-          body: "Your verification code is: " <> <<_::bytes-size(6)>>,
-          messaging_service_sid: "",
-          to: ^phone_number
-        } ->
-          {:ok, response}
-        end
-      )
+
+      expect(@twilio_adapter.Message, :create, fn %{
+                                                    body:
+                                                      "Your verification code is: " <>
+                                                        <<_::bytes-size(6)>>,
+                                                    messaging_service_sid: "",
+                                                    to: ^phone_number
+                                                  } ->
+        {:ok, response}
+      end)
+
       assert PasswordlessAuth.create_and_send_verification_code(phone_number) == {:ok, response}
     end
 
     test "requests message creation from Twilio API and returns error on failure" do
       phone_number = "123"
       error_message = "This is the error message."
-      expect(
-        @twilio_adapter.Message,
-        :create,
-        fn %{
-          body: "Your verification code is: " <> <<_::bytes-size(6)>>,
-          messaging_service_sid: "",
-          to: ^phone_number
-        } ->
-          {:error, error_message, 400}
-        end
-      )
-      assert PasswordlessAuth.create_and_send_verification_code(phone_number) == {:error, error_message}
+
+      expect(@twilio_adapter.Message, :create, fn %{
+                                                    body:
+                                                      "Your verification code is: " <>
+                                                        <<_::bytes-size(6)>>,
+                                                    messaging_service_sid: "",
+                                                    to: ^phone_number
+                                                  } ->
+        {:error, error_message, 400}
+      end)
+
+      assert PasswordlessAuth.create_and_send_verification_code(phone_number) ==
+               {:error, error_message}
     end
 
     test "stores verification code with expiry date in the future" do
       ttl = Application.get_env(:passwordless_auth, :verification_code_ttl)
       phone_number = "123"
-      expect(@twilio_adapter.Message, :create,fn _ -> {:ok, nil} end)
+      expect(@twilio_adapter.Message, :create, fn _ -> {:ok, nil} end)
       PasswordlessAuth.create_and_send_verification_code(phone_number)
+
       assert %{
-          "123" => %VerificationCode{
-            code: _,
-            expires: expires
-          }
-        } = Agent.get(Store, fn state -> state end)
+               "123" => %VerificationCode{
+                 code: _,
+                 expires: expires
+               }
+             } = Agent.get(Store, fn state -> state end)
+
       assert NaiveDateTime.compare(expires, NaiveDateTime.utc_now()) == :gt
-      assert NaiveDateTime.compare(expires, NaiveDateTime.utc_now() |> NaiveDateTime.add(ttl)) == :lt
+
+      assert NaiveDateTime.compare(expires, NaiveDateTime.utc_now() |> NaiveDateTime.add(ttl)) ==
+               :lt
     end
   end
 
@@ -87,6 +92,7 @@ defmodule PasswordlessAuthTest do
 
   describe "remove_code/1" do
     setup [:add_verification_codes_to_store]
+
     test "removes verification code for given phone number and does not remove other verification codes" do
       state = Agent.get(Store, fn state -> state end)
       phone_number = "+447123456789"
@@ -103,22 +109,21 @@ defmodule PasswordlessAuthTest do
   end
 
   defp add_verification_codes_to_store(context \\ %{}) do
-    expires = context[:expires] || (NaiveDateTime.utc_now() |> NaiveDateTime.add(300))
-    Agent.update(
-      Store,
-      fn _ ->
-        %{
-          "+447123456789" => %VerificationCode{
-            code: "123456",
-            expires: expires
-          },
-          "+15551234" => %VerificationCode{
-            code: "555555",
-            expires: expires
-          }
+    expires = context[:expires] || NaiveDateTime.utc_now() |> NaiveDateTime.add(300)
+
+    Agent.update(Store, fn _ ->
+      %{
+        "+447123456789" => %VerificationCode{
+          code: "123456",
+          expires: expires
+        },
+        "+15551234" => %VerificationCode{
+          code: "555555",
+          expires: expires
         }
-      end
-    )
+      }
+    end)
+
     :ok
   end
 end

@@ -2,7 +2,8 @@ defmodule PasswordlessAuth.Behaviours.TwilioAdapter do
   @callback init() :: any()
   defmodule Message do
     @type request :: map()
-    @type response :: any() # ExTwilio uses a struct but we don't do anything with it currently
+    # ExTwilio uses a struct but we don't do anything with it currently
+    @type response :: any()
 
     @doc """
     Creates a request to send an SMS based on the details given in the request map

@@ -6,9 +6,9 @@ defmodule PasswordlessAuth.Mixfile do
       app: :passwordless_auth,
       version: "0.1.0",
       elixir: "~> 1.5",
-      start_permanent: Mix.env == :prod,
+      start_permanent: Mix.env() == :prod,
       deps: deps(),
-      elixirc_paths: elixirc_paths(Mix.env)
+      elixirc_paths: elixirc_paths(Mix.env())
     ]
   end
 

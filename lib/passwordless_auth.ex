@@ -43,8 +43,11 @@ defmodule PasswordlessAuth do
             expires: expires
           })
         )
+
         {:ok, response}
-      {:error, message, _code} -> {:error, message}
+
+      {:error, message, _code} ->
+        {:error, message}
     end
   end
 
@@ -63,10 +66,15 @@ defmodule PasswordlessAuth do
   """
   def verify_code(phone_number, verification_code) do
     current_date_time = NaiveDateTime.utc_now()
+
     with state <- Agent.get(Store, fn state -> state end),
          true <- Map.has_key?(state, phone_number),
          ^verification_code <- get_in(state, [phone_number, Access.key(:code)]),
-         :gt <- NaiveDateTime.compare(get_in(state, [phone_number, Access.key(:expires)]), current_date_time) do
+         :gt <-
+           NaiveDateTime.compare(
+             get_in(state, [phone_number, Access.key(:expires)]),
+             current_date_time
+           ) do
       true
     else
       _ -> false
@@ -80,6 +88,7 @@ defmodule PasswordlessAuth do
   """
   def remove_code(phone_number) do
     state = Agent.get(Store, fn state -> state end)
+
     if Map.has_key?(state, phone_number) do
       code = Agent.get(Store, &Map.get(&1, phone_number))
       Agent.update(Store, &Map.delete(&1, phone_number))
