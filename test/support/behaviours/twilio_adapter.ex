@@ -1,4 +1,4 @@
-defmodule PasswordlessAuth.Behaviours.TwilioAdapter do
+defmodule PasswordlessAuthTest.Behaviours.ExTwilio do
   @callback init() :: none()
   defmodule Message do
     @type request :: map()
