@@ -1,21 +1,27 @@
 defmodule PasswordlessAuth.GarbageCollector do
   @moduledoc """
-  Verification codes are stored in the PasswordlessAuth.Store agent
+  Verification codes are stored in the PasswordlessAuth.Store Agent
   This worker looks for expires verification codes at a set interval
-  and removes them from the Agent state
+  and removes them from the Agent state.
+
+  The garbage collection interval is configurable with
+  `garbage_collector_frequency` (defaults to 30 seconds).
   """
   use GenServer
   alias PasswordlessAuth.Store
 
+  @doc false
   def start_link do
     GenServer.start_link(__MODULE__, %{})
   end
 
+  @doc false
   def init(args) do
     queue_garbage_collection()
     {:ok, args}
   end
 
+  @doc false
   def handle_info(:collect_garbage, args) do
     remove_expired_items()
     queue_garbage_collection()

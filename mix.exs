@@ -8,7 +8,8 @@ defmodule PasswordlessAuth.Mixfile do
       elixir: "~> 1.5",
       start_permanent: Mix.env() == :prod,
       deps: deps(),
-      elixirc_paths: elixirc_paths(Mix.env())
+      elixirc_paths: elixirc_paths(Mix.env()),
+      dialyzer: [plt_add_deps: :apps_direct, plt_add_apps: [:wx]]
     ]
   end
 
@@ -27,7 +28,8 @@ defmodule PasswordlessAuth.Mixfile do
   defp deps do
     [
       {:ex_twilio, "~> 0.5.1"},
-      {:mox, "~> 0.3", only: :test}
+      {:mox, "~> 0.3", only: :test},
+      {:dialyxir, "~> 0.5", only: :dev, runtime: false}
     ]
   end
 end

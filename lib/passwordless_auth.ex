@@ -1,9 +1,21 @@
 defmodule PasswordlessAuth do
+  @moduledoc """
+  PasswordlessAuth is a library gives you the ability to verify a user's
+  phone number by sending them a verification code, and verifying that
+  the code they provide matches the code that was sent to their phone number.
+
+  Verification codes are stored in an Agent along with the phone number they
+  were sent to. They are stored with an expiration date/time.
+
+  A garbage collector removes expires verification codes from the store.
+  See PasswordlessAuth.GarbageCollector
+  """
   use Application
   alias PasswordlessAuth.{GarbageCollector, VerificationCode, Store}
 
   @twilio_adapter Application.get_env(:passwordless_auth, :twilio_adapter)
 
+  @doc false
   def start(_type, _args) do
     import Supervisor.Spec
 
@@ -23,6 +35,7 @@ defmodule PasswordlessAuth do
 
   Returns `{:ok, twilio_response}` or `{:error, error}`.
   """
+  @spec create_and_send_verification_code(String.t()) :: {:ok, struct()} | {:error, String.t()}
   def create_and_send_verification_code(phone_number) do
     verification_code = VerificationCode.generate_code()
     ttl = Application.get_env(:passwordless_auth, :verification_code_ttl) || 300
@@ -64,6 +77,7 @@ defmodule PasswordlessAuth do
       false
 
   """
+  @spec verify_code(String.t(), String.t()) :: boolean()
   def verify_code(phone_number, verification_code) do
     current_date_time = NaiveDateTime.utc_now()
 
@@ -86,6 +100,7 @@ defmodule PasswordlessAuth do
 
   Returns `{:ok, %VerificationCode{...}}` or `{:error, :reason}`.
   """
+  @spec remove_code(String.t()) :: {:ok, %VerificationCode{}} | {:error, atom()}
   def remove_code(phone_number) do
     state = Agent.get(Store, fn state -> state end)
 
