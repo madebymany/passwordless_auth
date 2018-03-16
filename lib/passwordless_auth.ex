@@ -13,7 +13,7 @@ defmodule PasswordlessAuth do
   use Application
   alias PasswordlessAuth.{GarbageCollector, VerificationCode, Store}
 
-  @twilio_adapter Application.get_env(:passwordless_auth, :twilio_adapter)
+  @twilio_adapter Application.get_env(:passwordless_auth, :twilio_adapter) || ExTwilio
 
   @doc false
   def start(_type, _args) do
