@@ -20,8 +20,8 @@ defmodule PasswordlessAuth do
     import Supervisor.Spec
 
     children = [
-      worker(GarbageCollector, []),
-      worker(Store, [])
+      GarbageCollector,
+      Store
     ]
 
     opts = [strategy: :one_for_one, name: PasswordlessAuth.Supervisor]

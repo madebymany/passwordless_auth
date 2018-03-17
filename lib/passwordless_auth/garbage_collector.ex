@@ -11,7 +11,7 @@ defmodule PasswordlessAuth.GarbageCollector do
   alias PasswordlessAuth.Store
 
   @doc false
-  def start_link do
+  def start_link(_) do
     GenServer.start_link(__MODULE__, %{})
   end
 
