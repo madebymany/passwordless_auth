@@ -13,12 +13,11 @@ defmodule PasswordlessAuth do
   use Application
   alias PasswordlessAuth.{GarbageCollector, VerificationCode, Store}
 
+  @default_verification_code_ttl 300
   @twilio_adapter Application.get_env(:passwordless_auth, :twilio_adapter) || ExTwilio
 
   @doc false
   def start(_type, _args) do
-    import Supervisor.Spec
-
     children = [
       GarbageCollector,
       Store
@@ -29,30 +28,53 @@ defmodule PasswordlessAuth do
   end
 
   @doc """
-  Send a verification code to the given `phone_number`
+  Send an SMS with a verification code to the given `phone_number`
+
   The verification code is valid for the number of seconds given to the
   `verification_code_ttl` config option (defaults to 300)
 
+  Options for the Twilio request can be passed to `opts`. You'll need
+  to pass at least a `from` or `messaging_service_sid` option for
+  messages to be sent (see the [Twilio API documentation](https://www.twilio.com/docs/api/messaging/send-messages#conditional-parameters))
+
   Returns `{:ok, twilio_response}` or `{:error, error}`.
   """
-  @spec create_and_send_verification_code(String.t()) :: {:ok, struct()} | {:error, String.t()}
-  def create_and_send_verification_code(phone_number) do
-    verification_code = VerificationCode.generate_code()
-    ttl = Application.get_env(:passwordless_auth, :verification_code_ttl) || 300
+  @spec create_and_send_verification_code(String.t(), list()) ::
+          {:ok, struct()} | {:error, String.t()}
+  def create_and_send_verification_code(phone_number, opts) do
+    create_and_send_verification_code(phone_number, "Your verification code is: {{code}}", opts)
+  end
+
+  @doc """
+  Send an SMS with a verification code to the given `phone_number`. Allows
+  a custom message for the SMS body.
+
+  The `message` can be injected with the code by formatting it like this:
+  "Yarrr, {{code}} be the secret"
+  """
+  @spec create_and_send_verification_code(String.t(), String.t(), list()) ::
+          {:ok, struct()} | {:error, String.t()}
+  def create_and_send_verification_code(phone_number, message, opts) do
+    code = VerificationCode.generate_code()
+
+    ttl =
+      Application.get_env(:passwordless_auth, :verification_code_ttl) ||
+        @default_verification_code_ttl
+
     expires = NaiveDateTime.utc_now() |> NaiveDateTime.add(ttl)
 
-    request = %{
-      to: phone_number,
-      messaging_service_sid: Application.get_env(:passwordless_auth, :messaging_service_sid),
-      body: "Your verification code is: #{verification_code}"
-    }
+    request =
+      Enum.into(opts, %{
+        to: phone_number,
+        body: String.replace(message, "{{code}}", code)
+      })
 
     case @twilio_adapter.Message.create(request) do
       {:ok, response} ->
         Agent.update(
           Store,
           &Map.put(&1, phone_number, %VerificationCode{
-            code: verification_code,
+            code: code,
             expires: expires
           })
         )

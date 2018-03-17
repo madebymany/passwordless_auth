@@ -1,9 +1,5 @@
 use Mix.Config
 
-config :passwordless_auth,
-  garbage_collector_frequency: 30,
-  messaging_service_sid: "",
-  twilio_adapter: ExTwilio,
-  verification_code_ttl: 300
+config :passwordless_auth, twilio_adapter: ExTwilio
 
-import_config "#{Mix.env}.exs"
+import_config "#{Mix.env()}.exs"

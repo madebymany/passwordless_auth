@@ -10,7 +10,7 @@ It sends text messages by using the [Twilio](https://www.twilio.com/) API via [e
 
 ## Installation
 
-Add `passwordless_auth` to your list of dependencies in `mix.exs`:
+Add `:passwordless_auth` to your list of dependencies in `mix.exs`:
 
 ```elixir
 def deps do
@@ -19,9 +19,10 @@ def deps do
   ]
 end
 ```
+
 ## Configuration
 
-PasswordlessAuth depends on [ExTwilio config](https://github.com/danielberkompas/ex_twilio) so set ExTwilio config in your `config/config.exs` file:
+PasswordlessAuth depends on [ExTwilio config](https://github.com/danielberkompas/ex_twilio) so you need to set ExTwilio config in your `config/config.exs` file:
 
 ```elixir
 config :ex_twilio,
@@ -30,13 +31,12 @@ config :ex_twilio,
   workspace_sid: "TWILIO_WORKSPACE_SID" # optional
 ```
 
-Set PasswordlessAuth config in your `config/config.exs` file:
+Optionally set PasswordlessAuth config in your `config/config.exs` file:
 
 ```elixir
 config :passwordless_auth,
-  messaging_service_sid: "",
-  garbage_collector_frequency: 30, # in seconds; optional (defaults to 30 if not provided)
-  verification_code_ttl: 300 # in seconds, optional (defaults to 300 if not provided)
+  garbage_collector_frequency: 30, # seconds; optional (defaults to 30 if not provided)
+  verification_code_ttl: 300 # seconds, optional (defaults to 300 if not provided)
 ```
 
 ## Usage
@@ -48,7 +48,10 @@ A passwordless authentication flow could look like this:
 User enters their phone number to request a verification code.
 
 ```elixir
-PasswordlessAuth.create_and_send_verification_code("+447123456789")
+PasswordlessAuth.create_and_send_verification_code(
+  "+447123456789",
+  messaging_service_sid: "abc123..."
+)
 ```
 
 ### 2. Verify the code
@@ -56,7 +59,10 @@ PasswordlessAuth.create_and_send_verification_code("+447123456789")
 User receives a text message with their verification code and enters it into the login form.
 
 ```elixir
-PasswordlessAuth.verify_code("+447123456789", "123456")
+PasswordlessAuth.verify_code(
+  "+447123456789",
+  "123456"
+)
 ```
 
 Returns `true` or `false`.
@@ -70,10 +76,8 @@ PasswordlessAuth.remove_code("+447123456789")
 ## TODO
 
 - [x] Tests
+- [x] Twilio options can be passed to `create_and_send_verification_sms` rather than requiring `messaging_service_sid` to be configured
 - [ ] Add license
 - [ ] Publish on hex.pm
 - [ ] Generate documentation
-- [ ] Don't start if config is missing
-- [ ] Twilio options can be passed to `create_and_send_verification_sms` rather than requiring `messaging_service_sid` to be configured
 - [ ] Email authentication method
-- [ ] Improve description in README

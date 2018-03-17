@@ -11,7 +11,7 @@ defmodule PasswordlessAuthTest do
     Agent.update(Store, fn _ -> %{} end)
   end
 
-  describe "create_and_send_verification_code/1" do
+  describe "create_and_send_verification_code/2" do
     test "requests message creation from Twilio API and returns response on success" do
       phone_number = "123"
       response = %{response: :data}
@@ -20,13 +20,13 @@ defmodule PasswordlessAuthTest do
                                                     body:
                                                       "Your verification code is: " <>
                                                         <<_::bytes-size(6)>>,
-                                                    messaging_service_sid: "",
                                                     to: ^phone_number
                                                   } ->
         {:ok, response}
       end)
 
-      assert PasswordlessAuth.create_and_send_verification_code(phone_number) == {:ok, response}
+      assert PasswordlessAuth.create_and_send_verification_code(phone_number, []) ==
+               {:ok, response}
     end
 
     test "requests message creation from Twilio API and returns error on failure" do
@@ -37,21 +37,20 @@ defmodule PasswordlessAuthTest do
                                                     body:
                                                       "Your verification code is: " <>
                                                         <<_::bytes-size(6)>>,
-                                                    messaging_service_sid: "",
                                                     to: ^phone_number
                                                   } ->
         {:error, error_message, 400}
       end)
 
-      assert PasswordlessAuth.create_and_send_verification_code(phone_number) ==
+      assert PasswordlessAuth.create_and_send_verification_code(phone_number, []) ==
                {:error, error_message}
     end
 
     test "stores verification code with expiry date in the future" do
-      ttl = Application.get_env(:passwordless_auth, :verification_code_ttl)
+      default_ttl = 300
       phone_number = "123"
       expect(@twilio_adapter.Message, :create, fn _ -> {:ok, nil} end)
-      PasswordlessAuth.create_and_send_verification_code(phone_number)
+      PasswordlessAuth.create_and_send_verification_code(phone_number, [])
 
       assert %{
                "123" => %VerificationCode{
@@ -62,8 +61,52 @@ defmodule PasswordlessAuthTest do
 
       assert NaiveDateTime.compare(expires, NaiveDateTime.utc_now()) == :gt
 
-      assert NaiveDateTime.compare(expires, NaiveDateTime.utc_now() |> NaiveDateTime.add(ttl)) ==
-               :lt
+      assert NaiveDateTime.compare(
+               expires,
+               NaiveDateTime.utc_now() |> NaiveDateTime.add(default_ttl)
+             ) == :lt
+    end
+
+    test "passes options to the Twilio request" do
+      phone_number = "123"
+      messaging_service_sid = "abc123..."
+
+      expect(@twilio_adapter.Message, :create, fn %{
+                                                    body:
+                                                      "Your verification code is: " <>
+                                                        <<_::bytes-size(6)>>,
+                                                    to: ^phone_number,
+                                                    messaging_service_sid: messaging_service_sid,
+                                                    another_option: true
+                                                  } ->
+        {:ok, nil}
+      end)
+
+      assert PasswordlessAuth.create_and_send_verification_code(phone_number, %{
+               messaging_service_sid: messaging_service_sid,
+               another_option: true
+             }) == {:ok, nil}
+    end
+  end
+
+  describe "create_and_send_verification_code/3" do
+    test "allows a custom message to be passed sent with the verification code" do
+      phone_number = "123"
+
+      expect(@twilio_adapter.Message, :create, fn %{
+                                                    body:
+                                                      "Yarrr, " <>
+                                                        <<_::bytes-size(6)>> <> " be the secret",
+                                                    to: ^phone_number
+                                                  } ->
+        {:ok, nil}
+      end)
+
+      assert PasswordlessAuth.create_and_send_verification_code(
+               phone_number,
+               "Yarrr, {{code}} be the secret",
+               []
+             ) == {:ok, nil}
     end
   end
 

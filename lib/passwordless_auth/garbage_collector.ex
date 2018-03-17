@@ -10,6 +10,8 @@ defmodule PasswordlessAuth.GarbageCollector do
   use GenServer
   alias PasswordlessAuth.Store
 
+  @default_garbage_collector_frequency 30
+
   @doc false
   def start_link(_) do
     GenServer.start_link(__MODULE__, %{})
@@ -29,7 +31,10 @@ defmodule PasswordlessAuth.GarbageCollector do
   end
 
   defp queue_garbage_collection do
-    frequency = Application.get_env(:passwordless_auth, :garbage_collector_frequency) || 30
+    frequency =
+      Application.get_env(:passwordless_auth, :garbage_collector_frequency) ||
+        @default_garbage_collector_frequency
+
     Process.send_after(self(), :collect_garbage, frequency * 1000)
   end
 
