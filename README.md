@@ -1,12 +1,12 @@
 # PasswordlessAuth
 
-This library gives you the ability to verify a user's phone number by sending them a verification code, and verifying that the code they provide matches the code that was sent to their phone number.
+This library enables you to implement a simple passwordless login or 2-factor / multi-factor authentication. It can also be used as part of a user registration process.
+
+It works by sending a text message with a numeric code to the phone number provided by the user. You can then request the user to verify the code they received before it expires.
 
 See [Usage](#usage) for example usage.
 
-It can be used as an authentication method on it's own, or as part of 2-factor or multi-factor authentication.
-
-It sends text messages by using the [Twilio](https://www.twilio.com/) API via [ex_twilio](https://github.com/danielberkompas/ex_twilio).
+Text messages are sent with the [Twilio](https://www.twilio.com/) API via [ex_twilio](https://github.com/danielberkompas/ex_twilio).
 
 ## Installation
 
@@ -72,6 +72,14 @@ Once a code has been verified, it should be removed so that it can't be used aga
 ```elixir
 PasswordlessAuth.remove_code("+447123456789")
 ```
+
+### 3. Authenticate session / issue token
+
+It's up to you to decide what to do once a user has verified their phone number.
+
+You could match the phone number to a user account, then authenticate the user's session for that user account, or issue them a token with claims for that user account, which [Guardian](https://github.com/ueberauth/guardian) could help you with.
+
+If there is no user account with that phone number, you could allow the user to register by requesting more information from them.
 
 ## TODO
 
