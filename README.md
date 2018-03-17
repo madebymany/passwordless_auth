@@ -88,5 +88,5 @@ If there is no user account with that phone number, you could allow the user to 
 - [x] Make verification code length configurable
 - [x] Add license
 - [x] Generate documentation
-- [ ] Publish on hex.pm
+- [x] Publish on hex.pm
 - [ ] Email authentication method

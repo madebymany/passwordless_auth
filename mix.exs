@@ -15,7 +15,9 @@ defmodule PasswordlessAuth.Mixfile do
       docs: [
         main: "PasswordlessAuth",
         extras: ["README.md"]
-      ]
+      ],
+      description: description(),
+      package: package()
     ]
   end
 
@@ -37,6 +39,18 @@ defmodule PasswordlessAuth.Mixfile do
       {:mox, "~> 0.3", only: :test},
       {:dialyxir, "~> 0.5", only: :dev, runtime: false},
       {:ex_doc, "~> 0.16", only: :dev, runtime: false}
+    ]
+  end
+
+  defp description do
+    "This library enables you to implement a simple passwordless login or 2-factor / multi-factor authentication. It can also be used as part of a user registration process."
+  end
+
+  defp package do
+    [
+      licenses: ["Apache 2.0"],
+      maintainers: ["Sam Murray"],
+      links: %{"GitHub" => "https://github.com/samueljmurray/passwordless_auth"}
     ]
   end
 end
