@@ -67,7 +67,7 @@ defmodule PasswordlessAuthTest do
              ) == :lt
     end
 
-    test "passes options to the Twilio request" do
+    test "passes twilio request options to the Twilio request" do
       phone_number = "123"
       messaging_service_sid = "abc123..."
 
@@ -83,13 +83,13 @@ defmodule PasswordlessAuthTest do
       end)
 
       assert PasswordlessAuth.create_and_send_verification_code(phone_number, %{
-               messaging_service_sid: messaging_service_sid,
-               another_option: true
+               twilio_request_options: %{
+                 messaging_service_sid: messaging_service_sid,
+                 another_option: true
+               }
              }) == {:ok, nil}
     end
-  end
 
-  describe "create_and_send_verification_code/3" do
     test "allows a custom message to be passed sent with the verification code" do
       phone_number = "123"
 
@@ -104,8 +104,26 @@ defmodule PasswordlessAuthTest do
 
       assert PasswordlessAuth.create_and_send_verification_code(
                phone_number,
-               "Yarrr, {{code}} be the secret",
-               []
+               message: "Yarrr, {{code}} be the secret"
+             ) == {:ok, nil}
+    end
+
+    test "allows a custom verification code length" do
+      phone_number = "123"
+      code_length = 9
+
+      expect(@twilio_adapter.Message, :create, fn %{
+                                                    body:
+                                                      "Your verification code is: " <>
+                                                        <<_::bytes-size(code_length)>>,
+                                                    to: ^phone_number
+                                                  } ->
+        {:ok, nil}
+      end)
+
+      assert PasswordlessAuth.create_and_send_verification_code(
+               phone_number,
+               code_length: code_length
              ) == {:ok, nil}
     end
   end
