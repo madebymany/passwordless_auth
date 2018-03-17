@@ -1,6 +1,6 @@
 defmodule PasswordlessAuth.GarbageCollector do
   @moduledoc """
-  Verification codes are stored in the PasswordlessAuth.Store Agent
+  Verification codes are stored in the PasswordlessAuth.Store Agent.
   This worker looks for expires verification codes at a set interval
   and removes them from the Agent state.
 

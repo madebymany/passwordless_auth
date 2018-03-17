@@ -9,7 +9,13 @@ defmodule PasswordlessAuth.Mixfile do
       start_permanent: Mix.env() == :prod,
       deps: deps(),
       elixirc_paths: elixirc_paths(Mix.env()),
-      dialyzer: [plt_add_deps: :apps_direct, plt_add_apps: [:wx]]
+      dialyzer: [plt_add_deps: :apps_direct, plt_add_apps: [:wx]],
+      name: "PasswordlessAuth",
+      source_url: "https://github.com/samueljmurray/passwordless_auth",
+      docs: [
+        main: "PasswordlessAuth",
+        extras: ["README.md"]
+      ]
     ]
   end
 
@@ -29,7 +35,8 @@ defmodule PasswordlessAuth.Mixfile do
     [
       {:ex_twilio, "~> 0.5.1"},
       {:mox, "~> 0.3", only: :test},
-      {:dialyxir, "~> 0.5", only: :dev, runtime: false}
+      {:dialyxir, "~> 0.5", only: :dev, runtime: false},
+      {:ex_doc, "~> 0.16", only: :dev, runtime: false}
     ]
   end
 end

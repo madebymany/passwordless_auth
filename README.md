@@ -87,6 +87,6 @@ If there is no user account with that phone number, you could allow the user to 
 - [x] Twilio options can be passed to `create_and_send_verification_sms` rather than requiring `messaging_service_sid` to be configured
 - [x] Make verification code length configurable
 - [x] Add license
+- [x] Generate documentation
 - [ ] Publish on hex.pm
-- [ ] Generate documentation
 - [ ] Email authentication method
