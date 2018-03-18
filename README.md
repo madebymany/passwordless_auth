@@ -8,6 +8,10 @@ See [Usage](#usage) for example usage.
 
 Text messages are sent with the [Twilio](https://www.twilio.com/) API via [ex_twilio](https://github.com/danielberkompas/ex_twilio).
 
+## Documentation
+
+Documentation is available at [https://hexdocs.pm/passwordless_auth](https://hexdocs.pm/passwordless_auth)
+
 ## Installation
 
 Add `:passwordless_auth` to your list of dependencies in `mix.exs`:
