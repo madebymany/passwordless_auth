@@ -11,7 +11,7 @@ defmodule PasswordlessAuth.Mixfile do
       elixirc_paths: elixirc_paths(Mix.env()),
       dialyzer: [plt_add_deps: :apps_direct, plt_add_apps: [:wx]],
       name: "PasswordlessAuth",
-      source_url: "https://github.com/samueljmurray/passwordless_auth",
+      source_url: "https://github.com/madebymany/passwordless_auth",
       docs: [
         main: "PasswordlessAuth",
         extras: ["README.md"]
@@ -50,7 +50,7 @@ defmodule PasswordlessAuth.Mixfile do
     [
       licenses: ["Apache 2.0"],
       maintainers: ["Sam Murray"],
-      links: %{"GitHub" => "https://github.com/samueljmurray/passwordless_auth"}
+      links: %{"GitHub" => "https://github.com/madebymany/passwordless_auth"}
     ]
   end
 end
