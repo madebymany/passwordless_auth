@@ -76,7 +76,7 @@ defmodule PasswordlessAuthTest do
                                                       "Your verification code is: " <>
                                                         <<_::bytes-size(6)>>,
                                                     to: ^phone_number,
-                                                    messaging_service_sid: messaging_service_sid,
+                                                    messaging_service_sid: ^messaging_service_sid,
                                                     another_option: true
                                                   } ->
         {:ok, nil}
