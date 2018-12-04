@@ -35,7 +35,7 @@ defmodule PasswordlessAuth.Mixfile do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:ex_twilio, "~> 0.5.1"},
+      {:ex_twilio, "~> 0.6"},
       {:mox, "~> 0.3", only: :test},
       {:dialyxir, "~> 0.5", only: :dev, runtime: false},
       {:ex_doc, "~> 0.16", only: :dev, runtime: false}
