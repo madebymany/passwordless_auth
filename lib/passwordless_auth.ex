@@ -55,7 +55,7 @@ defmodule PasswordlessAuth do
 
   Returns `{:ok, twilio_response}` or `{:error, error}`.
   """
-  @spec create_and_send_verification_code(String.t(), list()) :: {:ok, struct()} | {:error, String.t()}
+  @spec create_and_send_verification_code(String.t(), list()) :: {:ok, map()} | {:error, String.t()}
   def create_and_send_verification_code(phone_number, opts \\ []) do
     message = opts[:message] || "Your verification code is: {{code}}"
     code_length = opts[:code_length] || 6
