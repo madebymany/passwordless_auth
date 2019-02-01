@@ -145,6 +145,22 @@ defmodule PasswordlessAuthTest do
       assert PasswordlessAuth.verify_code("+447123456789", "123456") == false
     end
 
+    test "returns false when attempts to enter the verification code are blocked" do
+      attempts_blocked_until = NaiveDateTime.utc_now() |> NaiveDateTime.add(10)
+      add_verification_codes_to_store(%{attempts_blocked_until: attempts_blocked_until})
+      assert PasswordlessAuth.verify_code("+447123456789", "123456") == false
+    end
+
+    test "returns false after the max number of allowed_attempts for the verification code are reached" do
+      add_verification_codes_to_store()
+
+      for _ <- 1..Application.get_env(:passwordless_auth, :num_attempts_before_timeout) do
+        false = PasswordlessAuth.verify_code("+447123456789", "000000")
+      end
+
+      assert PasswordlessAuth.verify_code("+447123456789", "123456") == false
+    end
+
     test "returns true when verification code matches and has not expired" do
       add_verification_codes_to_store()
       assert PasswordlessAuth.verify_code("+447123456789", "123456") == true
@@ -170,15 +186,18 @@ defmodule PasswordlessAuthTest do
   end
 
   defp add_verification_codes_to_store(context \\ %{}) do
+    attempts_blocked_until = context[:attempts_blocked_until] || nil
     expires = context[:expires] || NaiveDateTime.utc_now() |> NaiveDateTime.add(300)
 
     Agent.update(Store, fn _ ->
       %{
         "+447123456789" => %VerificationCode{
+          attempts_blocked_until: attempts_blocked_until,
           code: "123456",
           expires: expires
         },
         "+15551234" => %VerificationCode{
+          attempts_blocked_until: attempts_blocked_until,
           code: "555555",
           expires: expires
         }
