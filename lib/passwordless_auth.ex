@@ -45,7 +45,7 @@ defmodule PasswordlessAuth do
   - `opts`: Options (see below)
 
   Options:
-  
+
   - `message`: A custom text message template. The verification code
   can be injected with this formatting: _"Yarrr, {{code}} be the secret"_.
   Defaults to _"Your verification code is: {{code}}"_
@@ -55,7 +55,8 @@ defmodule PasswordlessAuth do
 
   Returns `{:ok, twilio_response}` or `{:error, error}`.
   """
-  @spec create_and_send_verification_code(String.t(), list()) :: {:ok, map()} | {:error, String.t()}
+  @spec create_and_send_verification_code(String.t(), list()) ::
+          {:ok, map()} | {:error, String.t()}
   def create_and_send_verification_code(phone_number, opts \\ []) do
     message = opts[:message] || "Your verification code is: {{code}}"
     code_length = opts[:code_length] || 6
@@ -68,6 +69,7 @@ defmodule PasswordlessAuth do
     expires = NaiveDateTime.utc_now() |> NaiveDateTime.add(ttl)
 
     twilio_request_options = opts[:twilio_request_options] || []
+
     request =
       Enum.into(twilio_request_options, %{
         to: phone_number,
