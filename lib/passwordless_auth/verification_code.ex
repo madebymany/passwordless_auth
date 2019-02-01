@@ -1,6 +1,8 @@
 defmodule PasswordlessAuth.VerificationCode do
   @moduledoc false
+  @enforce_keys [:code, :expires]
   defstruct code: nil, expires: nil
+  @type t :: %__MODULE__{code: integer(), expires: NaiveDateTime.t()}
 
   @doc false
   @spec generate_code(integer()) :: String.t()

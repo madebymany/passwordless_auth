@@ -129,7 +129,7 @@ defmodule PasswordlessAuth do
 
   Returns `{:ok, %VerificationCode{...}}` or `{:error, :reason}`.
   """
-  @spec remove_code(String.t()) :: {:ok, %VerificationCode{}} | {:error, atom()}
+  @spec remove_code(String.t()) :: {:ok, VerificationCode.t()} | {:error, atom()}
   def remove_code(phone_number) do
     state = Agent.get(Store, fn state -> state end)
 
