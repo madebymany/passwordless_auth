@@ -100,15 +100,15 @@ defmodule PasswordlessAuth do
   given `verification_code` stores in state and that
   the verification code hasn't expired.
 
-  Returns `true` or `false`.
+  Returns `:ok` or `{:error, :reason}`.
 
   ## Examples
 
       iex> PasswordlessAuth.verify_code("+447123456789", "123456")
-      false
+      {:error, :does_not_exist}
 
   """
-  @spec verify_code(String.t(), String.t()) :: boolean()
+  @spec verify_code(String.t(), String.t()) :: :ok | {:error, :attempt_blocked | :code_expired | :does_not_exist | :incorrect_code}
   def verify_code(phone_number, attempt_code) do
     state = Agent.get(Store, fn state -> state end)
 
@@ -118,14 +118,14 @@ defmodule PasswordlessAuth do
          :ok <- check_attempt_is_allowed(verification_code),
          :ok <- check_attempt_code(verification_code, attempt_code) do
       reset_attempts(phone_number)
-      true
+      :ok
     else
-      {:error, message} ->
-        if message == :incorrect_code do
-          increment_or_block_attempts(phone_number)
-        end
+      {:error, :incorrect_code} = error ->
+        increment_or_block_attempts(phone_number)
+        error
 
-        false
+      {:error, _reason} = error ->
+        error
     end
   end
 
@@ -145,7 +145,7 @@ defmodule PasswordlessAuth do
     end
   end
 
-  @spec check_code_exists(map(), String.t()) :: boolean()
+  @spec check_code_exists(map(), String.t()) :: :ok | {:error, :does_not_exist}
   defp check_code_exists(state, phone_number) do
     if Map.has_key?(state, phone_number) do
       :ok
@@ -154,7 +154,7 @@ defmodule PasswordlessAuth do
     end
   end
 
-  @spec check_verification_code_not_expired(VerificationCode.t()) :: boolean()
+  @spec check_verification_code_not_expired(VerificationCode.t()) :: :ok | {:error, :code_expired}
   defp check_verification_code_not_expired(%VerificationCode{expires: expires}) do
     case NaiveDateTime.compare(expires, NaiveDateTime.utc_now()) do
       :gt -> :ok
@@ -162,7 +162,7 @@ defmodule PasswordlessAuth do
     end
   end
 
-  @spec check_attempt_is_allowed(VerificationCode.t()) :: boolean()
+  @spec check_attempt_is_allowed(VerificationCode.t()) :: :ok | {:error, :attempt_blocked}
   defp check_attempt_is_allowed(%VerificationCode{attempts_blocked_until: nil}), do: :ok
 
   defp check_attempt_is_allowed(%VerificationCode{attempts_blocked_until: attempts_blocked_until}) do
@@ -172,7 +172,7 @@ defmodule PasswordlessAuth do
     end
   end
 
-  @spec check_attempt_code(VerificationCode.t(), String.t()) :: boolean()
+  @spec check_attempt_code(VerificationCode.t(), String.t()) :: :ok | {:error, :incorrect_code}
   defp check_attempt_code(%VerificationCode{code: code}, attempt_code) do
     if attempt_code == code do
       :ok
@@ -181,12 +181,12 @@ defmodule PasswordlessAuth do
     end
   end
 
-  @spec reset_attempts(integer()) :: VerificationCode.t()
+  @spec reset_attempts(String.t()) :: :ok
   defp reset_attempts(phone_number) do
     Agent.update(Store, &put_in(&1, [phone_number, Access.key(:attempts)], 0))
   end
 
-  @spec increment_or_block_attempts(integer()) :: VerificationCode.t()
+  @spec increment_or_block_attempts(String.t()) :: :ok
   defp increment_or_block_attempts(phone_number) do
     num_attempts_before_timeout =
       Application.get_env(:passwordless_auth, :num_attempts_before_timeout) ||
