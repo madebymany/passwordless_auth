@@ -38,7 +38,7 @@ defmodule PasswordlessAuth.Mixfile do
       {:ex_twilio, "~> 0.6"},
       {:mox, "~> 0.3", only: :test},
       {:dialyxir, "~> 0.5", only: :dev, runtime: false},
-      {:ex_doc, "~> 0.16", only: :dev, runtime: false}
+      {:ex_doc, "~> 0.19", only: :dev, runtime: false}
     ]
   end
 
