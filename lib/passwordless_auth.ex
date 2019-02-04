@@ -18,6 +18,8 @@ defmodule PasswordlessAuth do
   @default_rate_limit_timeout_length 60
   @twilio_adapter Application.get_env(:passwordless_auth, :twilio_adapter) || ExTwilio
 
+  @type verification_failed_reason() :: :attempt_blocked | :code_expired | :does_not_exist | :incorrect_code
+
   @doc false
   def start(_type, _args) do
     children = [
@@ -108,7 +110,7 @@ defmodule PasswordlessAuth do
       {:error, :does_not_exist}
 
   """
-  @spec verify_code(String.t(), String.t()) :: :ok | {:error, :attempt_blocked | :code_expired | :does_not_exist | :incorrect_code}
+  @spec verify_code(String.t(), String.t()) :: :ok | {:error, verification_failed_reason()}
   def verify_code(phone_number, attempt_code) do
     state = Agent.get(Store, fn state -> state end)
 
@@ -134,7 +136,7 @@ defmodule PasswordlessAuth do
 
   Returns `{:ok, %VerificationCode{...}}` or `{:error, :reason}`.
   """
-  @spec remove_code(String.t()) :: {:ok, VerificationCode.t()} | {:error, atom()}
+  @spec remove_code(String.t()) :: {:ok, VerificationCode.t()} | {:error, :does_not_exist}
   def remove_code(phone_number) do
     state = Agent.get(Store, fn state -> state end)
 
