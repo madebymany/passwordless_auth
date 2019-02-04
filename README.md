@@ -40,6 +40,8 @@ Optionally set PasswordlessAuth config in your `config/config.exs` file:
 ```elixir
 config :passwordless_auth,
   garbage_collector_frequency: 30, # seconds; optional (defaults to 30 if not provided)
+  num_attempts_before_timeout: 5, # optional (defaults to 5 if not provided)
+  rate_limit_timeout_length: 60, # seconds; optional (defaults to 60 if not provided)
   verification_code_ttl: 300 # seconds, optional (defaults to 300 if not provided)
 ```
 
