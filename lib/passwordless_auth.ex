@@ -18,7 +18,8 @@ defmodule PasswordlessAuth do
   @default_rate_limit_timeout_length 60
   @twilio_adapter Application.get_env(:passwordless_auth, :twilio_adapter) || ExTwilio
 
-  @type verification_failed_reason() :: :attempt_blocked | :code_expired | :does_not_exist | :incorrect_code
+  @type verification_failed_reason() ::
+          :attempt_blocked | :code_expired | :does_not_exist | :incorrect_code
 
   @doc false
   def start(_type, _args) do
