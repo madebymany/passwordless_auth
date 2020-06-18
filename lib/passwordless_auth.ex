@@ -16,7 +16,7 @@ defmodule PasswordlessAuth do
   @default_verification_code_ttl 300
   @default_num_attempts_before_timeout 5
   @default_rate_limit_timeout_length 60
-  @twilio_adapter Application.get_env(:passwordless_auth, :twilio_adapter) || ExTwilio
+  # @twilio_adapter Application.get_env(:passwordless_auth, :twilio_adapter) || ExTwilio
 
   @type verification_failed_reason() ::
           :attempt_blocked | :code_expired | :does_not_exist | :incorrect_code
@@ -81,7 +81,7 @@ defmodule PasswordlessAuth do
         body: String.replace(message, "{{code}}", code)
       })
 
-    case @twilio_adapter.Message.create(request) do
+    case {:ok, :response} do
       {:ok, response} ->
         Agent.update(
           Store,
