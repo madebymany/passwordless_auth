@@ -16,7 +16,7 @@ defmodule PasswordlessAuth do
   @default_verification_code_ttl 300
   @default_num_attempts_before_timeout 5
   @default_rate_limit_timeout_length 60
-  @sms_adapter Application.get_env(:passwordless_auth, :sms_adapter) || ExTwilio
+  @sms_adapter Application.get_env(:passwordless_auth, :sms_adapter)
 
   @type verification_failed_reason() ::
           :attempt_blocked | :code_expired | :does_not_exist | :incorrect_code
