@@ -78,10 +78,11 @@ defmodule PasswordlessAuth do
     request =
       Enum.into(sms_request_options, %{
         to: phone_number,
-        body: String.replace(message, "{{code}}", code)
+        body: String.replace(message, "{{code}}", code),
+        code: code
       })
 
-    case {:ok, code} do
+    case @sms_adapter.Message.create(request) do
       {:ok, response} ->
         Agent.update(
           Store,
