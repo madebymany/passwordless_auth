@@ -16,7 +16,8 @@ defmodule PasswordlessAuth do
   @default_verification_code_ttl 300
   @default_num_attempts_before_timeout 5
   @default_rate_limit_timeout_length 60
-  @twilio_adapter Application.get_env(:passwordless_auth, :twilio_adapter) || ExTwilio
+  # Removed default adapter ExTwilio
+  @sms_adapter Application.get_env(:passwordless_auth, :sms_adapter)
 
   @type verification_failed_reason() ::
           :attempt_blocked | :code_expired | :does_not_exist | :incorrect_code
@@ -73,15 +74,16 @@ defmodule PasswordlessAuth do
 
     expires = NaiveDateTime.utc_now() |> NaiveDateTime.add(ttl)
 
-    twilio_request_options = opts[:twilio_request_options] || []
+    sms_request_options = opts[:sms_request_options] || []
 
     request =
-      Enum.into(twilio_request_options, %{
+      Enum.into(sms_request_options, %{
         to: phone_number,
-        body: String.replace(message, "{{code}}", code)
+        body: String.replace(message, "{{code}}", code),
+        code: code
       })
 
-    case @twilio_adapter.Message.create(request) do
+    case @sms_adapter.Message.create(request) do
       {:ok, response} ->
         Agent.update(
           Store,

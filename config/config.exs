@@ -1,5 +1,5 @@
 use Mix.Config
 
-config :passwordless_auth, twilio_adapter: ExTwilio
+# Removed default config option of ExTwilio for SMS adapter
 
 import_config "#{Mix.env()}.exs"
