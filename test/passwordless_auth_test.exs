@@ -4,7 +4,7 @@ defmodule PasswordlessAuthTest do
   alias PasswordlessAuth.{VerificationCode, Store}
   doctest PasswordlessAuth
 
-  @twilio_adapter Application.get_env(:passwordless_auth, :twilio_adapter)
+  @sms_adapter Application.get_env(:passwordless_auth, :sms_adapter)
 
   setup do
     # Clear the store before each test
@@ -16,7 +16,7 @@ defmodule PasswordlessAuthTest do
       phone_number = "123"
       response = %{response: :data}
 
-      expect(@twilio_adapter.Message, :create, fn %{
+      expect(@sms_adapter.Message, :create, fn %{
                                                     body:
                                                       "Your verification code is: " <>
                                                         <<_::bytes-size(6)>>,
@@ -33,7 +33,7 @@ defmodule PasswordlessAuthTest do
       phone_number = "123"
       error_message = "This is the error message."
 
-      expect(@twilio_adapter.Message, :create, fn %{
+      expect(@sms_adapter.Message, :create, fn %{
                                                     body:
                                                       "Your verification code is: " <>
                                                         <<_::bytes-size(6)>>,
@@ -49,7 +49,7 @@ defmodule PasswordlessAuthTest do
     test "stores verification code with expiry date in the future" do
       default_ttl = 300
       phone_number = "123"
-      expect(@twilio_adapter.Message, :create, fn _ -> {:ok, nil} end)
+      expect(@sms_adapter.Message, :create, fn _ -> {:ok, nil} end)
       PasswordlessAuth.create_and_send_verification_code(phone_number, [])
 
       assert %{
@@ -71,7 +71,7 @@ defmodule PasswordlessAuthTest do
       phone_number = "123"
       messaging_service_sid = "abc123..."
 
-      expect(@twilio_adapter.Message, :create, fn %{
+      expect(@sms_adapter.Message, :create, fn %{
                                                     body:
                                                       "Your verification code is: " <>
                                                         <<_::bytes-size(6)>>,
@@ -93,7 +93,7 @@ defmodule PasswordlessAuthTest do
     test "allows a custom message to be passed sent with the verification code" do
       phone_number = "123"
 
-      expect(@twilio_adapter.Message, :create, fn %{
+      expect(@sms_adapter.Message, :create, fn %{
                                                     body:
                                                       "Yarrr, " <>
                                                         <<_::bytes-size(6)>> <> " be the secret",
@@ -112,7 +112,7 @@ defmodule PasswordlessAuthTest do
       phone_number = "123"
       code_length = 9
 
-      expect(@twilio_adapter.Message, :create, fn %{
+      expect(@sms_adapter.Message, :create, fn %{
                                                     body:
                                                       "Your verification code is: " <>
                                                         <<_::bytes-size(code_length)>>,
