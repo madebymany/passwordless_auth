@@ -71,10 +71,7 @@ defmodule PasswordlessAuthTest do
       phone_number = "123"
       messaging_service_sid = "abc123..."
 
-      expect(@sms_adapter.Message, :create, fn %{
-                                                    body:
-                                                      "Your verification code is: " <>
-                                                        <<_::bytes-size(6)>>,
+      expect(@sms_adapter.Message, :create, fn %{ body: "Your verification code is: " <> <<_::bytes-size(6)>>,
                                                     to: ^phone_number,
                                                     messaging_service_sid: ^messaging_service_sid,
                                                     another_option: true
@@ -83,7 +80,7 @@ defmodule PasswordlessAuthTest do
       end)
 
       assert PasswordlessAuth.create_and_send_verification_code(phone_number, %{
-               twilio_request_options: %{
+               sms_request_options: %{
                  messaging_service_sid: messaging_service_sid,
                  another_option: true
                }
