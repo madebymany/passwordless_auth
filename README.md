@@ -26,9 +26,11 @@ end
 
 ## Configuration
 
-PasswordlessAuth depends on [ExTwilio config](https://github.com/danielberkompas/ex_twilio) so you need to set ExTwilio config in your `config/config.exs` file:
+PasswordlessAuth uses [ExTwilio](https://github.com/danielberkompas/ex_twilio) as a default sms adapter. So if you want to use that then you need to set ExTwilio config in your `config/config.exs` file:
 
 ```elixir
+config :passwordless_auth, sms_adapter: ExTwilio
+
 config :ex_twilio,
   account_sid: "TWILIO_ACCOUNT_SID",
   auth_token: "TWILIO_AUTH_TOKEN",
