@@ -37,6 +37,8 @@ config :ex_twilio,
   workspace_sid: "TWILIO_WORKSPACE_SID" # optional
 ```
 
+Note: We expact that the custome SMS adapter has a module called Message with create function.
+
 Optionally set PasswordlessAuth config in your `config/config.exs` file:
 
 ```elixir
