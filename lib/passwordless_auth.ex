@@ -1,14 +1,11 @@
 defmodule PasswordlessAuth do
   @moduledoc """
-  PasswordlessAuth is a library gives you the ability to verify a user's
-  phone number by sending them a verification code, and verifying that
-  the code they provide matches the code that was sent to their phone number.
+  PasswordlessAuth provides functionality for generating numeric codes that
+  can be used for verifying a user's ownership of a phone number, email address
+  or any other identifying address.
 
-  Verification codes are stored in an Agent along with the phone number they
-  were sent to. They are stored with an expiration date/time.
-
-  A garbage collector removes expires verification codes from the store.
-  See PasswordlessAuth.GarbageCollector
+  It is designed to be used in a verification system, such as a passwordless authentication
+  flow or as part of multi-factor authentication (MFA).
   """
   use Application
   alias PasswordlessAuth.{GarbageCollector, VerificationCode, Store}
@@ -16,7 +13,6 @@ defmodule PasswordlessAuth do
   @default_verification_code_ttl 300
   @default_num_attempts_before_timeout 5
   @default_rate_limit_timeout_length 60
-  @twilio_adapter Application.get_env(:passwordless_auth, :twilio_adapter) || ExTwilio
 
   @type verification_failed_reason() ::
           :attempt_blocked | :code_expired | :does_not_exist | :incorrect_code
@@ -33,38 +29,21 @@ defmodule PasswordlessAuth do
   end
 
   @doc """
-  Send an SMS with a verification code to the given `phone_number`
+  Generates a verification code for the given recipient. The code is a string of numbers that is `code_length` characters long (defaults to 6).
 
   The verification code is valid for the number of seconds given to the
   `verification_code_ttl` config option (defaults to 300)
 
-  Options for the Twilio request can be passed to `opts[:twilio_request_options`.
-  You'll need to pass at least a `from` or `messaging_service_sid` option
-  to `options[:twilio_request_options]` for messages to be sent
-  (see the [Twilio API documentation](https://www.twilio.com/docs/api/messaging/send-messages#conditional-parameters))
-  For example:
-
   Arguments:
 
-  - `phone_number`: The phone number that will receive the text message
-  - `opts`: Options (see below)
+  - `recipient`: A reference to the recipient of the code. This is used for verifying the code with `verify_code/2`
+  - `code_length`: The length of the code. Defaults to 6.
 
-  Options:
-
-  - `message`: A custom text message template. The verification code
-  can be injected with this formatting: _"Yarrr, {{code}} be the secret"_.
-  Defaults to _"Your verification code is: {{code}}"_
-  - `code_length`: Length of the verification code (defaults to 6)
-  - `twilio_request_options`: A map of options that are passed to the Twilio request
-  (see the [Twilio API documentation](https://www.twilio.com/docs/api/messaging/send-messages#conditional-parameters))
-
-  Returns `{:ok, twilio_response}` or `{:error, error}`.
+  Returns the code.
   """
-  @spec create_and_send_verification_code(String.t(), list()) ::
-          {:ok, map()} | {:error, String.t()}
-  def create_and_send_verification_code(phone_number, opts \\ []) do
-    message = opts[:message] || "Your verification code is: {{code}}"
-    code_length = opts[:code_length] || 6
+  @spec generate_code(String.t(), integer()) ::
+          String.t()
+  def generate_code(recipient, code_length \\ 6) do
     code = VerificationCode.generate_code(code_length)
 
     ttl =
@@ -73,35 +52,21 @@ defmodule PasswordlessAuth do
 
     expires = NaiveDateTime.utc_now() |> NaiveDateTime.add(ttl)
 
-    twilio_request_options = opts[:twilio_request_options] || []
-
-    request =
-      Enum.into(twilio_request_options, %{
-        to: phone_number,
-        body: String.replace(message, "{{code}}", code)
+    Agent.update(
+      Store,
+      &Map.put(&1, recipient, %VerificationCode{
+        code: code,
+        expires: expires
       })
+    )
 
-    case @twilio_adapter.Message.create(request) do
-      {:ok, response} ->
-        Agent.update(
-          Store,
-          &Map.put(&1, phone_number, %VerificationCode{
-            code: code,
-            expires: expires
-          })
-        )
-
-        {:ok, response}
-
-      {:error, message, _code} ->
-        {:error, message}
-    end
+    code
   end
 
   @doc """
-  Verifies that a the given `phone_number` has the
-  given `verification_code` stores in state and that
-  the verification code hasn't expired.
+  Verifies that a the given `recipient` has the
+  given `attempt_code` stored in state and that
+  the code hasn't expired.
 
   Returns `:ok` or `{:error, :reason}`.
 
@@ -112,19 +77,19 @@ defmodule PasswordlessAuth do
 
   """
   @spec verify_code(String.t(), String.t()) :: :ok | {:error, verification_failed_reason()}
-  def verify_code(phone_number, attempt_code) do
+  def verify_code(recipient, attempt_code) do
     state = Agent.get(Store, fn state -> state end)
 
-    with :ok <- check_code_exists(state, phone_number),
-         verification_code <- Map.get(state, phone_number),
+    with :ok <- check_code_exists(state, recipient),
+         verification_code <- Map.get(state, recipient),
          :ok <- check_verification_code_not_expired(verification_code),
          :ok <- check_attempt_is_allowed(verification_code),
          :ok <- check_attempt_code(verification_code, attempt_code) do
-      reset_attempts(phone_number)
+      reset_attempts(recipient)
       :ok
     else
       {:error, :incorrect_code} = error ->
-        increment_or_block_attempts(phone_number)
+        increment_or_block_attempts(recipient)
         error
 
       {:error, _reason} = error ->
@@ -133,24 +98,24 @@ defmodule PasswordlessAuth do
   end
 
   @doc """
-  Removes a code from state based on the given `phone_number`
+  Removes a code from state based on the given `recipient`
 
   Returns `{:ok, %VerificationCode{...}}` or `{:error, :reason}`.
   """
   @spec remove_code(String.t()) :: {:ok, VerificationCode.t()} | {:error, :does_not_exist}
-  def remove_code(phone_number) do
+  def remove_code(recipient) do
     state = Agent.get(Store, fn state -> state end)
 
-    with :ok <- check_code_exists(state, phone_number) do
-      code = Agent.get(Store, &Map.get(&1, phone_number))
-      Agent.update(Store, &Map.delete(&1, phone_number))
+    with :ok <- check_code_exists(state, recipient) do
+      code = Agent.get(Store, &Map.get(&1, recipient))
+      Agent.update(Store, &Map.delete(&1, recipient))
       {:ok, code}
     end
   end
 
   @spec check_code_exists(map(), String.t()) :: :ok | {:error, :does_not_exist}
-  defp check_code_exists(state, phone_number) do
-    if Map.has_key?(state, phone_number) do
+  defp check_code_exists(state, recipient) do
+    if Map.has_key?(state, recipient) do
       :ok
     else
       {:error, :does_not_exist}
@@ -185,20 +150,20 @@ defmodule PasswordlessAuth do
   end
 
   @spec reset_attempts(String.t()) :: :ok
-  defp reset_attempts(phone_number) do
-    Agent.update(Store, &put_in(&1, [phone_number, Access.key(:attempts)], 0))
+  defp reset_attempts(recipient) do
+    Agent.update(Store, &put_in(&1, [recipient, Access.key(:attempts)], 0))
   end
 
   @spec increment_or_block_attempts(String.t()) :: :ok
-  defp increment_or_block_attempts(phone_number) do
+  defp increment_or_block_attempts(recipient) do
     num_attempts_before_timeout =
       Application.get_env(:passwordless_auth, :num_attempts_before_timeout) ||
         @default_num_attempts_before_timeout
 
-    attempts = Agent.get(Store, &get_in(&1, [phone_number, Access.key(:attempts)]))
+    attempts = Agent.get(Store, &get_in(&1, [recipient, Access.key(:attempts)]))
 
     if attempts < num_attempts_before_timeout - 1 do
-      Agent.update(Store, &put_in(&1, [phone_number, Access.key(:attempts)], attempts + 1))
+      Agent.update(Store, &put_in(&1, [recipient, Access.key(:attempts)], attempts + 1))
     else
       num_attempts_before_timeout =
         Application.get_env(:passwordless_auth, :rate_limit_timeout_length) ||
@@ -209,8 +174,8 @@ defmodule PasswordlessAuth do
 
       Agent.update(Store, fn state ->
         state
-        |> put_in([phone_number, Access.key(:attempts)], 0)
-        |> put_in([phone_number, Access.key(:attempts_blocked_until)], attempts_blocked_until)
+        |> put_in([recipient, Access.key(:attempts)], 0)
+        |> put_in([recipient, Access.key(:attempts_blocked_until)], attempts_blocked_until)
       end)
     end
   end
