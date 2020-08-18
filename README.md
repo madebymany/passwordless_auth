@@ -1,12 +1,18 @@
 # PasswordlessAuth
 
-This library enables you to implement a simple passwordless login or 2-factor / multi-factor authentication. It can also be used as part of a user registration process.
+PasswordlessAuth provides functionality that can be used in an authentication
+or verification system, such as a passwordless or multi-factor authentication
+flow, or for verifying a user's ownership of a phone number, email address
+or any other identifying address.
 
-It works by sending a text message with a numeric code to the phone number provided by the user. You can then request the user to verify the code they received before it expires.
+- Generate verification codes
+- Verify a user's attempt at entering a code
+- Rate limit attempts
+- Expire codes
+
+This library doesn't deal with sending the codes to recipients. 
 
 See [Usage](#usage) for example usage.
-
-Text messages are sent with the [Twilio](https://www.twilio.com/) API via [ex_twilio](https://github.com/danielberkompas/ex_twilio).
 
 ## Documentation
 
@@ -19,80 +25,66 @@ Add `:passwordless_auth` to your list of dependencies in `mix.exs`:
 ```elixir
 def deps do
   [
-    {:passwordless_auth, "~> 0.1.0"}
+    {:passwordless_auth, "~> 0.3.0"}
   ]
 end
 ```
 
 ## Configuration
 
-PasswordlessAuth depends on [ExTwilio config](https://github.com/danielberkompas/ex_twilio) so you need to set ExTwilio config in your `config/config.exs` file:
-
-```elixir
-config :ex_twilio,
-  account_sid: "TWILIO_ACCOUNT_SID",
-  auth_token: "TWILIO_AUTH_TOKEN",
-  workspace_sid: "TWILIO_WORKSPACE_SID" # optional
-```
-
-Optionally set PasswordlessAuth config in your `config/config.exs` file:
+The following PasswordlessAuth config can be set in your `config/config.exs` file:
 
 ```elixir
 config :passwordless_auth,
-  garbage_collector_frequency: 30, # seconds; optional (defaults to 30 if not provided)
-  num_attempts_before_timeout: 5, # optional (defaults to 5 if not provided)
-  rate_limit_timeout_length: 60, # seconds; optional (defaults to 60 if not provided)
-  verification_code_ttl: 300 # seconds, optional (defaults to 300 if not provided)
+  # How long codes are valid for
+  verification_code_ttl: 300, # seconds; default: 300
+  # Rate limiting: how many failed attempts are allowed before the timeout is applied
+  num_attempts_before_timeout: 5, # default: 5
+  # Rate limiting: how long to disallow attempts after the limit has been reached
+  rate_limit_timeout_length: 60, # seconds; default: 60
+  # How often to clear out expired codes
+  garbage_collector_frequency: 30 # seconds; default: 30
 ```
 
 ## Usage
 
-A passwordless authentication flow could look like this:
+Here's an example where the code is sent to a recipient's phone number using ExTwilio.
 
-### 1. Send a verification code to the user's phone number
+### 1. Generate a verification code for the recipient
 
 User enters their phone number to request a verification code.
 
 ```elixir
-PasswordlessAuth.create_and_send_verification_code(
-  "+447123456789",
-  messaging_service_sid: "abc123..."
-)
+code = PasswordlessAuth.generate_code("+447123456789")
+=> "123456"
 ```
 
-### 2. Verify the code
+### 2. Send the code to the recipient
 
-User receives a text message with their verification code and enters it into the login form.
+This library doesn't deal with SMS or emails, so this bit is up to you.
+```elixir
+ExTwilio.Message.create(%{
+  to: "+447123456789",
+  body: "Your code is #{code}"
+})
+```
+
+### 3. Verify the code
+
+Recipient receives a text message with their verification code. They enter it into your system and you verify that it is correct.
 
 ```elixir
+attempt_code = "123456" # The user's attempt at entering the correct verification code.
 PasswordlessAuth.verify_code(
   "+447123456789",
-  "123456"
+  attempt_code
 )
 ```
 
 Returns `true` or `false`.
 
-Once a code has been verified, it should be removed so that it can't be used again:
+Once a code has been verified, you can remove it so that it can't be used again before it expires.
 
 ```elixir
 PasswordlessAuth.remove_code("+447123456789")
 ```
-
-### 3. Authenticate session / issue token
-
-It's up to you to decide what to do once a user has verified their phone number.
-
-You could match the phone number to a user account, then authenticate the user's session for that user account, or issue them a token with claims for that user account, which [Guardian](https://github.com/ueberauth/guardian) could help you with.
-
-If there is no user account with that phone number, you could allow the user to register by requesting more information from them.
-
-## TODO
-
-- [x] Tests
-- [x] Twilio options can be passed to `create_and_send_verification_sms` rather than requiring `messaging_service_sid` to be configured
-- [x] Make verification code length configurable
-- [x] Add license
-- [x] Generate documentation
-- [x] Publish on hex.pm
-- [ ] Email authentication method
